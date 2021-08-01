@@ -16,21 +16,25 @@ class Base64EncodePage extends StatefulWidget {
 }
 
 class _Base64EncodePageState extends State<Base64EncodePage> {
-  html.TextAreaElement plainTextAreaElement = html.TextAreaElement();
-  html.TextAreaElement encodedTextAreaElement = html.TextAreaElement();
+  html.TextAreaElement base64TextAreaElement = html.TextAreaElement();
+  html.TextAreaElement cssTextAreaElement = html.TextAreaElement();
+  html.TextAreaElement htmlTextAreaElement = html.TextAreaElement();
+  html.TextAreaElement dartTextAreaElement = html.TextAreaElement();
   html.FileUploadInputElement fileUploadInputElement = html.FileUploadInputElement();
 
-  late Uint8List image = Uint8List.fromList([]);
+  Uint8List image = Uint8List.fromList([]);
 
   @override
   void initState() {
     super.initState();
+
     init();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       body: SingleChildScrollView(
         child: Container(
           padding: EdgeInsets.all(20),
@@ -44,187 +48,262 @@ class _Base64EncodePageState extends State<Base64EncodePage> {
                   Padding(
                     padding: const EdgeInsets.only(bottom: 8.0),
                     child: Text(
-                      'Enter the text to Base64 Encode',
-                      style: TextStyle(color: textColor, fontSize: 18),
+                      'Select Your Image to Convert',
+                      style: TextStyle(color: textColor, fontSize: 20),
                     ),
                   ),
-                  if (image != null) Image.memory(image) else Container(),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      IconButton(
-                          onPressed: () {
-                            plainTextAreaElement.value = null;
-                            encodedTextAreaElement.value = null;
-                          },
-                          icon: Icon(
-                            Icons.refresh,
-                            color: accentIconColor,
-                          )),
-                      IconButton(
-                          onPressed: () {
-                            plainTextAreaElement.select();
-                            html.document.execCommand("copy");
-                          },
-                          icon: Icon(
-                            Icons.copy,
-                            color: accentIconColor,
-                          ))
-                    ],
-                  ),
-                ],
-              ),
-              Padding(padding: EdgeInsets.all(20)),
-              Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      MaterialButton(
-                        height: 50,
-                        color: buttonColor,
-                        onPressed: () async {
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                    ),
+                    margin: EdgeInsets.only(left: 20),
+                    child: MaterialButton(
+                      height: 50,
+                      color: buttonColor,
+                      onPressed: () async {
+                        html.FileUploadInputElement uploadInput = html.FileUploadInputElement();
+                        uploadInput.click();
 
-                        },
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.cached,
-                              color: Colors.white,
-                            ),
-                            Text(
-                              "Base64 Encode",
-                              style: TextStyle(color: Colors.white, fontSize: 18),
-                            )
-                          ],
-                        ),
-                      ),
-                      Padding(padding: EdgeInsets.all(20)),
-                      Container(
-                        decoration: BoxDecoration(color: Colors.white, border: Border.all(color: accentTextColor)),
-                        child: MaterialButton(
-                          height: 50,
-                          color: Colors.white,
-                          onPressed: () async {
-                            html.FileUploadInputElement uploadInput = html.FileUploadInputElement();
-                            uploadInput.click();
+                        uploadInput.onChange.listen((event) {
+                          html.File file = uploadInput.files!.first;
+                          html.FileReader reader = html.FileReader();
+                          reader.readAsArrayBuffer(file);
 
-                            uploadInput.onChange.listen((event) {
-                              html.File file = uploadInput.files!.first;
-                              html.FileReader reader = html.FileReader();
-                              reader.readAsArrayBuffer(file);
-                              print('File path ${file.name}');
-                              print('File path ${file.relativePath}');
-                              print('File path ${file.type}');
-
-                              reader.onLoadEnd.listen((event) {}).onData((data) async {
-                                print('File path ${reader.result}');
-                                print('File path ${reader.result.runtimeType}');
-                                image = reader.result as Uint8List;
-                                plainTextAreaElement.value = reader.result.toString();
-                                encodedTextAreaElement.value =
-                                    await Base64Encoder.imageToBase64(image).catchError((error) {});
-                                setState(() {});
-                              });
-                            });
-                          },
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.upload,
-                                color: accentTextColor,
-                              ),
-                              Padding(padding: EdgeInsets.all(5)),
-                              Text(
-                                "File Upload",
-                                style: TextStyle(color: accentTextColor, fontSize: 18),
-                              )
-                            ],
+                          reader.onLoadEnd.listen((event) {}).onData((data)   {
+                            image = reader.result as Uint8List;
+                              output();
+                          });
+                        });
+                      },
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.upload,
+                            color: Colors.white,
                           ),
-                        ),
+                          Padding(padding: EdgeInsets.all(5)),
+                          Text(
+                            "Upload Image",
+                            style: TextStyle(color: Colors.white, fontSize: 18),
+                          )
+                        ],
                       ),
-                    ],
+                    ),
                   ),
-                  Padding(padding: EdgeInsets.all(10)),
-                  StreamBuilder<String>(
-                      stream: Base64Encoder.resultStream.stream,
-                      builder: (context, snapshot) {
-                        if (snapshot.hasError)
-                          return Text(
-                            snapshot.error.toString(),
-                            style: TextStyle(color: errorTextColor),
-                          );
-                        return Container(
-                          height: 1,
-                          width: 1,
-                        );
-                      }),
                 ],
               ),
               Padding(padding: EdgeInsets.all(10)),
+              Divider(),
+              Padding(padding: EdgeInsets.all(20)),
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 8.0),
-                    child: Text(
-                      'Output Text',
-                      style: TextStyle(color: textColor, fontSize: 18),
+                  if (image.length > 0)
+                    Container(
+                      height: MediaQuery.of(context).size.height * 0.75,
+                      width: MediaQuery.of(context).size.width / 2,
+                      child: Image.memory(
+                        image,
+                        height: 300,
+                      ),
+                    )
+                  else
+                    Container(
+                      alignment: Alignment.topCenter,
+                      height: 300,
+                      width: 300,
+                      child: Column(
+                        children: [
+                          Icon(
+                            Icons.image,
+                            color: accentColor,
+                            size: 200,
+                          ),
+                          Text(
+                            'Image Preview',
+                            style: TextStyle(color: textColor, fontSize: 18),
+                          )
+                        ],
+                      ),
                     ),
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      IconButton(
-                          onPressed: () {
-                            encodedTextAreaElement.select();
-                            html.document.execCommand("copy");
-                          },
-                          icon: Icon(
-                            Icons.copy,
-                            color: accentIconColor,
-                          ))
-                    ],
-                  ),
+                  Padding(padding: EdgeInsets.all(20)),
+                  Flexible(
+                    flex: 1,
+                    child: Container(
+                      width: MediaQuery.of(context).size.height / 2,
+                      child: Column(
+                        children: [
+                          Column(
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.only(bottom: 8.0),
+                                    child: Text(
+                                      'Base64 String',
+                                      style: TextStyle(color: textColor, fontSize: 18),
+                                    ),
+                                  ),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                    children: [
+                                      IconButton(
+                                          onPressed: () {
+                                            downloadFile(base64TextAreaElement.value!);
+                                          },
+                                          icon: Icon(
+                                            Icons.cloud_download_sharp,
+                                            color: accentIconColor,
+                                          )),
+                                      IconButton(
+                                          onPressed: () {
+                                            base64TextAreaElement.select();
+                                            html.document.execCommand("copy");
+                                          },
+                                          icon: Icon(
+                                            Icons.copy,
+                                            color: accentIconColor,
+                                          )),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                              Container(height: 300, child: HtmlElementView(viewType: base64TextAreaElement.name)),
+                            ],
+                          ),
+                          Padding(padding: EdgeInsets.all(10)),
+                          Column(
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.only(bottom: 8.0),
+                                    child: Text(
+                                      'Flutter/Dart code',
+                                      style: TextStyle(color: textColor, fontSize: 18),
+                                    ),
+                                  ),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                    children: [
+                                      IconButton(
+                                          onPressed: () {
+                                            downloadFile(dartTextAreaElement.value!);
+                                          },
+                                          icon: Icon(
+                                            Icons.cloud_download_sharp,
+                                            color: accentIconColor,
+                                          )),
+                                      IconButton(
+                                          onPressed: () {
+                                            dartTextAreaElement.select();
+                                            html.document.execCommand("copy");
+                                          },
+                                          icon: Icon(
+                                            Icons.copy,
+                                            color: accentIconColor,
+                                          ))
+                                    ],
+                                  ),
+                                ],
+                              ),
+                              Container(height: 300, child: HtmlElementView(viewType: dartTextAreaElement.name)),
+                            ],
+                          ),
+                          Padding(padding: EdgeInsets.all(10)),
+                          Column(
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.only(bottom: 8.0),
+                                    child: Text(
+                                      'HTML <img> code',
+                                      style: TextStyle(color: textColor, fontSize: 18),
+                                    ),
+                                  ),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                    children: [
+                                      IconButton(
+                                          onPressed: () {
+                                            downloadFile(htmlTextAreaElement.value!);
+                                          },
+                                          icon: Icon(
+                                            Icons.cloud_download_sharp,
+                                            color: accentIconColor,
+                                          )),
+                                      IconButton(
+                                          onPressed: () {
+                                            htmlTextAreaElement.select();
+                                            html.document.execCommand("copy");
+                                          },
+                                          icon: Icon(
+                                            Icons.copy,
+                                            color: accentIconColor,
+                                          ))
+                                    ],
+                                  ),
+                                ],
+                              ),
+                              Container(height: 300, child: HtmlElementView(viewType: htmlTextAreaElement.name)),
+                            ],
+                          ),
+                          Padding(padding: EdgeInsets.all(10)),
+                          Column(
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.only(bottom: 8.0),
+                                    child: Text(
+                                      'CSS Background Source',
+                                      style: TextStyle(color: textColor, fontSize: 18),
+                                    ),
+                                  ),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                    children: [
+                                      IconButton(
+                                          onPressed: () {
+                                            downloadFile(cssTextAreaElement.value!);
+                                          },
+                                          icon: Icon(
+                                            Icons.cloud_download_sharp,
+                                            color: accentIconColor,
+                                          )),
+                                      IconButton(
+                                          onPressed: () {
+                                            cssTextAreaElement.select();
+                                            html.document.execCommand("copy");
+                                          },
+                                          icon: Icon(
+                                            Icons.copy,
+                                            color: accentIconColor,
+                                          ))
+                                    ],
+                                  ),
+                                ],
+                              ),
+                              Container(height: 300, child: HtmlElementView(viewType: cssTextAreaElement.name)),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
                 ],
               ),
-              Container(height: 300, child: HtmlElementView(viewType: encodedTextAreaElement.name)),
-              Center(
-                child: Container(
-                  margin: const EdgeInsets.only(top: 10.0),
-                  decoration: BoxDecoration(color: Colors.white, border: Border.all(color: accentTextColor)),
-                  child: MaterialButton(
-                    height: 50,
-                    color: Colors.white,
-                    onPressed: () async {
-                      if (encodedTextAreaElement.value != null)
-                        html.AnchorElement()
-                          ..href =
-                              '${Uri.dataFromString(encodedTextAreaElement.value!, mimeType: 'text/plain', encoding: convert.utf8)}'
-                          ..download = 'base64-encode-navoki.com.txt'
-                          ..style.display = 'none'
-                          ..click();
-                    },
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.cloud_download_sharp,
-                          color: accentTextColor,
-                        ),
-                        Padding(padding: EdgeInsets.all(5)),
-                        Text(
-                          "Download",
-                          style: TextStyle(color: accentTextColor, fontSize: 18),
-                        )
-                      ],
-                    ),
-                  ),
-                ),
+              Padding(padding: EdgeInsets.all(20)),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [],
               ),
             ],
           ),
@@ -233,19 +312,55 @@ class _Base64EncodePageState extends State<Base64EncodePage> {
     );
   }
 
-  void init() {
-    plainTextAreaElement = html.TextAreaElement()..required = true;
-    plainTextAreaElement.placeholder = 'Enter text to Encode';
-    plainTextAreaElement.name = 'text-area';
+  Future<void> output() async {
+    String? base64 = await Base64Encoder.imageToBase64(image).catchError((error) {});
+    base64TextAreaElement.value = base64;
+    htmlTextAreaElement.value = """<img src='data:image/png;base64,$base64'/>""";
+    cssTextAreaElement.value = """background-image: url(data:image/png;base64,$base64)""";
+    dartTextAreaElement.value = """
+    import 'dart:convert';
+    import 'dart:typed_data';
+    
+    String base64String='$base64';
+    
+    Uint8List image = base64.decode(base64String);
+    
+    return Image.memory(image,
+    height: 300);
+                              
+    """;
 
-    encodedTextAreaElement = html.TextAreaElement()..required = true;
-    encodedTextAreaElement.placeholder = 'Encoded data';
-    encodedTextAreaElement.name = 'encoded-text-area';
+    setState(() {});
+  }
+
+  void downloadFile(String text) {
+    if (text.isNotEmpty)
+      html.AnchorElement()
+        ..href = '${Uri.dataFromString(text, mimeType: 'text/plain', encoding: convert.utf8)}'
+        ..download = 'image-to-base64-navoki.com.txt'
+        ..style.display = 'none'
+        ..click();
+  }
+
+  void init() {
+    cssTextAreaElement = html.TextAreaElement()..required = true;
+    cssTextAreaElement.name = 'css-code';
+
+    base64TextAreaElement = html.TextAreaElement()..required = true;
+    base64TextAreaElement.name = 'base64String';
+
+    htmlTextAreaElement = html.TextAreaElement()..required = true;
+    htmlTextAreaElement.name = 'html-code';
+
+    dartTextAreaElement = html.TextAreaElement()..required = true;
+    dartTextAreaElement.name = 'dart-code';
 
     fileUploadInputElement.name = 'file-upload';
 
-    ui.platformViewRegistry.registerViewFactory(plainTextAreaElement.name, (int id) => plainTextAreaElement);
-    ui.platformViewRegistry.registerViewFactory(encodedTextAreaElement.name, (int id) => encodedTextAreaElement);
+    ui.platformViewRegistry.registerViewFactory(htmlTextAreaElement.name, (int id) => htmlTextAreaElement);
+    ui.platformViewRegistry.registerViewFactory(cssTextAreaElement.name, (int id) => cssTextAreaElement);
+    ui.platformViewRegistry.registerViewFactory(base64TextAreaElement.name, (int id) => base64TextAreaElement);
     ui.platformViewRegistry.registerViewFactory(fileUploadInputElement.name!, (int id) => fileUploadInputElement);
+    ui.platformViewRegistry.registerViewFactory(dartTextAreaElement.name, (int id) => dartTextAreaElement);
   }
 }
