@@ -6,16 +6,17 @@ import 'dart:ui' as ui;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_to_base64/AppConstant.dart';
-import 'package:image_to_base64/Base64Encoder.dart';
 
-class Base64EncodePage extends StatefulWidget {
-  const Base64EncodePage({Key? key}) : super(key: key);
+import 'EncodeDecode.dart';
+
+class ImageToBase64Page extends StatefulWidget {
+  const ImageToBase64Page({Key? key}) : super(key: key);
 
   @override
-  _Base64EncodePageState createState() => _Base64EncodePageState();
+  _ImageToBase64PageState createState() => _ImageToBase64PageState();
 }
 
-class _Base64EncodePageState extends State<Base64EncodePage> {
+class _ImageToBase64PageState extends State<ImageToBase64Page> {
   html.TextAreaElement base64TextAreaElement = html.TextAreaElement();
   html.TextAreaElement cssTextAreaElement = html.TextAreaElement();
   html.TextAreaElement htmlTextAreaElement = html.TextAreaElement();
@@ -60,20 +61,8 @@ class _Base64EncodePageState extends State<Base64EncodePage> {
                     child: MaterialButton(
                       height: 50,
                       color: buttonColor,
-                      onPressed: () async {
-                        html.FileUploadInputElement uploadInput = html.FileUploadInputElement();
-                        uploadInput.click();
-
-                        uploadInput.onChange.listen((event) {
-                          html.File file = uploadInput.files!.first;
-                          html.FileReader reader = html.FileReader();
-                          reader.readAsArrayBuffer(file);
-
-                          reader.onLoadEnd.listen((event) {}).onData((data)   {
-                            image = reader.result as Uint8List;
-                              output();
-                          });
-                        });
+                      onPressed: ()  {
+                        uploadFile();
                       },
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -312,8 +301,24 @@ class _Base64EncodePageState extends State<Base64EncodePage> {
     );
   }
 
+  Future<void> uploadFile()async {
+    html.FileUploadInputElement uploadInput = html.FileUploadInputElement();
+    uploadInput.click();
+
+    uploadInput.onChange.listen((event) {
+      html.File file = uploadInput.files!.first;
+      html.FileReader reader = html.FileReader();
+      reader.readAsArrayBuffer(file);
+
+      reader.onLoadEnd.listen((event) {}).onData((data) {
+        image = reader.result as Uint8List;
+        output();
+      });
+    });
+  }
+
   Future<void> output() async {
-    String? base64 = await Base64Encoder.imageToBase64(image).catchError((error) {});
+    String? base64 = await EncodeDecode.imageToBase64(image).catchError((error) {});
     base64TextAreaElement.value = base64;
     htmlTextAreaElement.value = """<img src='data:image/png;base64,$base64'/>""";
     cssTextAreaElement.value = """background-image: url(data:image/png;base64,$base64)""";
@@ -333,7 +338,7 @@ class _Base64EncodePageState extends State<Base64EncodePage> {
     setState(() {});
   }
 
-  void downloadFile(String text) {
+  void downloadFile(String text) async {
     if (text.isNotEmpty)
       html.AnchorElement()
         ..href = '${Uri.dataFromString(text, mimeType: 'text/plain', encoding: convert.utf8)}'
