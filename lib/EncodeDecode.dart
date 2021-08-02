@@ -3,16 +3,17 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 class EncodeDecode {
-  static StreamController<String> resultStream = StreamController<String>();
+  static StreamController<String> imageToBase64Stream = StreamController<String>();
+  static StreamController<Uint8List> base64ToImageStream = StreamController<Uint8List>();
 
   static Future<String?> imageToBase64(Uint8List image) async {
     try {
       String result = base64.encode(image); // returns base64 string
-      resultStream.add('');
+      imageToBase64Stream.add('');
       return result;
     } catch (e) {
-      print('$e');
-      resultStream.addError("Error! Failed to convert");
+
+      imageToBase64Stream.addError("Error! Failed to convert");
       throw (e);
     }
   }
@@ -20,11 +21,11 @@ class EncodeDecode {
   static Future<Uint8List?> base64ToImage(String base64String) async {
     try {
       Uint8List result = base64.decode(base64String); // returns base64 string
-      resultStream.add('');
-      return result;
+      base64ToImageStream.add(result);
+
     } catch (e) {
-      print('$e');
-      resultStream.addError("Error! Failed to convert");
+      print('base64ToImage $e');
+      base64ToImageStream.addError("Error! Failed to convert");
       throw (e);
     }
   }

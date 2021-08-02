@@ -368,4 +368,15 @@ class _ImageToBase64PageState extends State<ImageToBase64Page> {
     ui.platformViewRegistry.registerViewFactory(fileUploadInputElement.name!, (int id) => fileUploadInputElement);
     ui.platformViewRegistry.registerViewFactory(dartTextAreaElement.name, (int id) => dartTextAreaElement);
   }
+
+  @override
+  void dispose() {
+    print('dispose ImageToBase64Page.dart');
+    EncodeDecode.imageToBase64Stream.close();
+    base64TextAreaElement.remove();
+    htmlTextAreaElement.remove();
+    dartTextAreaElement.remove();
+    cssTextAreaElement.remove();
+    super.dispose();
+  }
 }
